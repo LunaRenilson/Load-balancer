@@ -21,7 +21,7 @@ load-balancer/
 └── README.md                # Instruções de compilação/execução
 ```
 **Possível simplificação**
-A princípio, *simulation.py*, *metrics.py* e *analytical_model.py* poderiam compreender classes diferentes em um mesmo arquivo *simulation_analysis.py*. Fica a critério de que implementará.
+A princípio, *simulation.py*, *metrics.py*, *plot.py* e *analytical_model.py* poderiam compreender classes diferentes em um mesmo arquivo *simulation_analysis.py*. Fica a critério de que implementará.
 
 
 
