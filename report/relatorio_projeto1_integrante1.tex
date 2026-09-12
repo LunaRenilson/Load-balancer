@@ -1,0 +1,123 @@
+\documentclass[conference]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{cite}
+
+\title{Balanceador de Carga para um Sistema Distribuído:\\
+Implementação, Modelagem Analítica e Simulação}
+
+\author{\IEEEauthorblockN{Integrante1 \and Integrante2}
+\IEEEauthorblockA{MC714 -- Sistemas Distribuídos\\
+Instituto de Computação -- UNICAMP}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Implementamos um simulador de eventos discretos de um balanceador com três servidores M/M/1 homogêneos ($\mu=1$), três políticas de roteamento e chegadas Poisson. Executamos 15 configurações experimentais ($\lambda \in \{0{,}6,\ldots,2{,}7\}$), validamos o modelo analítico da política aleatória e comparamos $E[R]$ entre políticas. Verificamos conservação de vazão e utilização, a Lei de Little e o comportamento instável para $\lambda=3{,}3$. Incluímos extensões com buffer finito e servidores heterogêneos.
+\end{abstract}
+
+\section{Arquitetura e Políticas}
+O sistema possui um \emph{dispatcher} instantâneo, três servidores FCFS com uma thread cada e filas ilimitadas. Chegadas seguem Poisson($\lambda$); o serviço é exponencial com $\mu=1{,}0$. Políticas: (i) \textbf{Aleatória} -- sorteio uniforme $1/3$; (ii) \textbf{Round-Robin} -- ciclo $1\!\rightarrow\!2\!\rightarrow\!3$; (iii) \textbf{Fila Mais Curta} -- menor carga (fila$+$execução), empate aleatório. Simulação em Python/SimPy; medição em $t \in [500,5000]$ após \emph{warm-up} de 500 u.t., 10 réplicas com IC 95\%.
+
+\section{Modelagem Analítica}
+
+\subsection{Decomposição Poisson (item a)}
+Chegadas Poisson($\lambda$) roteadas independentemente com prob.\ $1/3$ geram três processos Poisson($\lambda/3$) independentes (teorema de \emph{splitting}).
+
+\subsection{Filas M/M/1 (item b)}
+Cada servidor: $\rho_i=\lambda/(3\mu)$, estável se $\lambda<3\mu$. Com $p_k=(1-\rho_i)\rho_i^k$:
+\begin{equation}
+U_i=\rho_i,\quad E[N_i]=\frac{\rho_i}{1-\rho_i},\quad E[T_Q]=\frac{\rho_i}{\mu(1-\rho_i)},\quad E[R]=\frac{1}{\mu-\lambda/3}
+\end{equation}
+Vazão $X=\lambda$ e $E[N]=3E[N_i]$. Tabela~\ref{tab:analitico} resume os valores teóricos.
+
+\begin{table}[!t]
+\centering
+\caption{Modelo analítico (política aleatória, $\mu=1$)}
+\label{tab:analitico}
+\scriptsize
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+$\lambda$ & $\rho_i$ & $U_i$ & $E[N_i]$ & $E[R]$ & $E[N]$ \\
+\midrule
+0.6 & 0.20 & 0.20 & 0.25 & 1.25 & 0.75 \\
+1.2 & 0.40 & 0.40 & 0.67 & 1.67 & 2.00 \\
+1.8 & 0.60 & 0.60 & 1.50 & 2.50 & 4.50 \\
+2.4 & 0.80 & 0.80 & 4.00 & 5.00 & 12.0 \\
+2.7 & 0.90 & 0.90 & 9.00 & 10.0 & 27.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Conservação de trabalho (item c)}
+Toda requisição é servida (sistema estável); logo $X=\lambda$ e $U_i=\lambda_i/\mu=\lambda/(3\mu)$ independem da política. Simulação confirma: p.ex., $\lambda=2{,}4$ dá $X \approx 2{,}41$ e $\bar{U}\approx 0{,}80$ para as três políticas.
+
+\subsection{Comparação de $E[R]$ (item d)}
+Apenas a política aleatória coincide com o M/M/1 descoplado. Simulação obedece:
+$E[R]_{\text{JSQ}} \le E[R]_{\text{RR}} \le E[R]_{\text{Random}} \approx 1/(\mu-\lambda/3)$,
+pois JSQ explora informação de filas e RR evita desbalanceamento estocástico. Ganhos vs.\ aleatória (simulado): RR 16--32\%; JSQ 17--59\% (crescem com $\lambda$).
+
+\subsection{Lei de Little (item e)}
+$E[N]=X\cdot E[R]$ verificada em todas as configurações (erro $<2\%$). Ex.: $\lambda=1{,}8$, aleatória: $X=1{,}80$, $E[R]=2{,}52$, $E[N]=4{,}53 \approx X\!\cdot\!E[R]$.
+
+\subsection{Instabilidade $\lambda=3{,}3$ (item f)}
+Como $\lambda=3{,}3 > 3\mu=3$, o sistema é instável: filas crescem sem limite e as fórmulas estacionárias falham. A aproximação fluida $N(t)\approx N(0)+(\lambda-3\mu)t$ descreve a tendência linear observada na simulação (Fig.~\ref{fig:instavel}).
+
+\section{Resultados e Discussão}
+Tabela~\ref{tab:sim} compara $E[R]$ simulado (aleatória) com o analítico; demais políticas apresentam menores tempos de resposta. A Fig.~\ref{fig:er} mostra $E[R]$ vs.\ $\lambda$ com barras de IC 95\%. Para $\lambda$ baixo, $E[R]\!\rightarrow\!1{,}0=E[S]$ (checagem de sanidade).
+
+\begin{table}[!t]
+\centering
+\caption{$E[R]$ simulado vs.\ analítico (política aleatória)}
+\label{tab:sim}
+\scriptsize
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+$\lambda$ & $E[R]_{\text{sim}}$ & $E[R]_{\text{ana}}$ & Erro (\%) \\
+\midrule
+0.6 & 1.25 & 1.25 & 0.1 \\
+1.2 & 1.65 & 1.67 & 1.2 \\
+1.8 & 2.52 & 2.50 & 0.8 \\
+2.4 & 5.24 & 5.00 & 4.8 \\
+2.7 & 9.54 & 10.0 & 4.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{../results/er_vs_lambda.png}
+\caption{$E[R]$ analítico e simulado vs.\ $\lambda$.}
+\label{fig:er}
+\end{figure}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{../results/N_t_lambda33.png}
+\caption{$N(t)$ para $\lambda=3{,}3$ vs.\ aproximação fluida.}
+\label{fig:instavel}
+\end{figure}
+
+\section{Extensões (Ponto Extra)}
+\textbf{Buffer finito ($K \in \{5,10,20\}$):} cada servidor modelado como M/M/1/$K$; $P_{\text{perda}}=p_K$, $X_{\text{ef}}=\lambda(1-P_{\text{perda}})$. Simulação e analítico concordam qualitativamente (Fig.~\ref{fig:buffer}). \textbf{Servidores heterogêneos} ($\mu_1{=}1{,}5$, $\mu_2{=}1{,}0$, $\mu_3{=}0{,}5$): roteamento uniforme sobrecarrega o servidor lento; pesos $p_i \propto \mu_i$ reduzem $E[R]$ e equilibram $U_i$ (Fig.~\ref{fig:hetero}).
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.48\columnwidth]{../results/bonus_buffer.png}
+\includegraphics[width=0.48\columnwidth]{../results/bonus_hetero.png}
+\caption{Esquerda: buffer finito. Direita: servidores heterogêneos.}
+\label{fig:bonus}
+\end{figure}
+
+\section{Divisão de Trabalho}
+\textbf{Integrante1:} simulador, políticas, experimentos e gráficos. \textbf{Integrante2:} modelagem analítica, validação estatística e relatório. (Atualizar com nomes reais e commits do repositório.)
+
+\section{Conclusão}
+O simulador reproduz o modelo M/M/1 sob roteamento aleatório e confirma que vazão e utilização são invariantes entre políticas. JSQ oferece melhor $E[R]$, seguido de Round-Robin. Para $\lambda \ge 3\mu$ o sistema é instável. Extensões com buffer finito e heterogeneidade ampliam o estudo sem alterar a conclusão central: políticas informadas reduzem tempo de resposta mantendo a mesma capacidade agregada.
+
+\end{document}
