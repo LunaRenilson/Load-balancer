@@ -9,7 +9,6 @@ from config import LAMBDA_VALUES, MU, NUM_REPLICAS, POLICIES, SIM_TIME, WARMUP
 from experiments import (
     run_all_experiments,
     run_buffer_bonus,
-    run_hetero_bonus,
     run_main_experiments,
     run_unstable_experiment,
 )
@@ -67,7 +66,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Simulador MC714 Trabalho 1")
     parser.add_argument(
         "--mode",
-        choices=["all", "main", "unstable", "bonus-buffer", "bonus-hetero", "analytical"],
+        choices=["all", "main", "unstable", "bonus-buffer", "analytical"],
         default="all",
         help="Modo de execução",
     )
@@ -96,15 +95,11 @@ def main() -> None:
         run_buffer_bonus()
         return
 
-    if args.mode == "bonus-hetero":
-        run_hetero_bonus()
-        return
-
-    main_results, unstable_results, buffer_results, hetero_results = run_all_experiments()
+    main_results, unstable_results, buffer_results = run_all_experiments()
     print_main_summary(main_results)
     print_ordering_table(main_results)
     print_analytical_table()
-    generate_all_plots(main_results, unstable_results, buffer_results, hetero_results)
+    generate_all_plots(main_results, unstable_results, buffer_results)
 
 
 if __name__ == "__main__":

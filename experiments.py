@@ -17,8 +17,6 @@ from analytical import (
 from config import (
     BASE_SEED,
     BUFFER_K_VALUES,
-    HETERO_MU,
-    HETERO_WEIGHTS,
     LAMBDA_VALUES,
     NUM_REPLICAS,
     NUM_SERVERS,
@@ -104,35 +102,6 @@ def run_buffer_bonus(lambda_values: list[float] | None = None) -> dict:
     return results
 
 
-def run_hetero_bonus(lambda_rate: float = 2.4) -> dict:
-    """Bônus: servidores heterogêneos — roteamento uniforme vs proporcional a μ."""
-    configs = {
-        "uniform": ("random", {}),
-        "proportional": ("random_weighted", {"weights": HETERO_WEIGHTS}),
-    }
-    results = {}
-    for config_name, (policy_name, extra_state) in configs.items():
-        policy_fn, base_state = get_policy(policy_name)
-        state = copy_state(base_state)
-        state.update(extra_state)
-        replicas = []
-        for replica in range(NUM_REPLICAS):
-            rep_state = copy_state(state)
-            seed = BASE_SEED + 3000 + replica + hash(config_name) % 100
-            replicas.append(
-                run_simulation(
-                    policy_fn,
-                    rep_state,
-                    lambda_rate,
-                    seed,
-                    server_mus=HETERO_MU,
-                )
-            )
-        results[config_name] = aggregate_replicas(replicas)
-        results[config_name]["server_mus"] = HETERO_MU
-    return results
-
-
 def build_summary_rows(main_results: dict) -> list[dict]:
     """Converte resultados principais em linhas para CSV."""
     rows = []
@@ -191,7 +160,6 @@ def save_results(
     main_results: dict,
     unstable_results: dict,
     buffer_results: dict,
-    hetero_results: dict,
 ) -> None:
     """Persiste resultados em CSV e JSON."""
     out_dir = _ensure_results_dir()
@@ -235,7 +203,6 @@ def save_results(
             }
             for (k, lam), agg in buffer_results.items()
         },
-        "hetero_bonus": hetero_results,
     }
 
     json_path = out_dir / "results.json"
@@ -245,7 +212,7 @@ def save_results(
     print(f"Resultados salvos em {csv_path} e {json_path}")
 
 
-def run_all_experiments() -> tuple[dict, dict, dict, dict]:
+def run_all_experiments() -> tuple[dict, dict, dict]:
     """Executa todos os experimentos e salva artefatos."""
     print("Executando experimentos principais (150 simulações)...")
     main_results = run_main_experiments()
@@ -256,8 +223,5 @@ def run_all_experiments() -> tuple[dict, dict, dict, dict]:
     print("Executando bônus buffer finito...")
     buffer_results = run_buffer_bonus()
 
-    print("Executando bônus servidores heterogêneos...")
-    hetero_results = run_hetero_bonus()
-
-    save_results(main_results, unstable_results, buffer_results, hetero_results)
-    return main_results, unstable_results, buffer_results, hetero_results
+    save_results(main_results, unstable_results, buffer_results)
+    return main_results, unstable_results, buffer_results

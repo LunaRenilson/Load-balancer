@@ -168,43 +168,10 @@ def plot_buffer_bonus(buffer_results: dict) -> Path:
     return path
 
 
-def plot_hetero_bonus(hetero_results: dict) -> Path:
-    """Bônus: comparação uniforme vs roteamento proporcional a μ."""
-    out_dir = _ensure_results_dir()
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
-
-    configs = ["uniform", "proportional"]
-    labels = ["Uniforme (1/3)", "Proporcional a μ"]
-    er_vals = [hetero_results[c]["mean_response"]["mean"] for c in configs]
-    axes[0].bar(labels, er_vals, color=["#4C72B0", "#55A868"])
-    axes[0].set_ylabel("E[R]")
-    axes[0].set_title("Tempo médio de resposta")
-
-    util_uniform = hetero_results["uniform"]["utilizations"]
-    util_prop = hetero_results["proportional"]["utilizations"]
-    x = np.arange(3)
-    width = 0.35
-    axes[1].bar(x - width / 2, [u["mean"] for u in util_uniform], width, label="Uniforme")
-    axes[1].bar(x + width / 2, [u["mean"] for u in util_prop], width, label="Proporcional")
-    axes[1].set_xticks(x)
-    axes[1].set_xticklabels(["μ=1.5", "μ=1.0", "μ=0.5"])
-    axes[1].set_ylabel("Utilização U_i")
-    axes[1].set_title("Utilização por servidor")
-    axes[1].legend()
-    axes[1].grid(True, alpha=0.3, axis="y")
-
-    fig.tight_layout()
-    path = out_dir / "bonus_hetero.png"
-    fig.savefig(path, dpi=150, bbox_inches="tight")
-    plt.close(fig)
-    return path
-
-
 def generate_all_plots(
     main_results: dict,
     unstable_results: dict,
     buffer_results: dict,
-    hetero_results: dict,
 ) -> list[Path]:
     """Gera todos os gráficos exigidos."""
     paths = [
@@ -212,7 +179,6 @@ def generate_all_plots(
         plot_little_law(main_results),
         plot_unstable_n(unstable_results),
         plot_buffer_bonus(buffer_results),
-        plot_hetero_bonus(hetero_results),
     ]
     for path in paths:
         print(f"Gráfico salvo: {path}")

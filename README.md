@@ -33,9 +33,6 @@ python main.py --mode unstable
 # Bônus: buffer finito M/M/1/K
 python main.py --mode bonus-buffer
 
-# Bônus: servidores heterogêneos
-python main.py --mode bonus-hetero
-
 # Tabela analítica M/M/1
 python main.py --mode analytical
 ```
@@ -61,7 +58,6 @@ Artefatos gerados em `results/`:
 - `little_law_check.png` — Lei de Little
 - `N_t_lambda33.png` — instabilidade
 - `bonus_buffer.png` — buffer finito
-- `bonus_hetero.png` — servidores heterogêneos
 
 ## Relatório
 

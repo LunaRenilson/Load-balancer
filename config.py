@@ -28,9 +28,5 @@ POLICY_LABELS = {
 # Bônus: buffer finito
 BUFFER_K_VALUES = [5, 10, 20]
 
-# Bônus: servidores heterogêneos
-HETERO_MU = [1.5, 1.0, 0.5]
-HETERO_WEIGHTS = [mu / sum(HETERO_MU) for mu in HETERO_MU]
-
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 REPORT_DIR = Path(__file__).resolve().parent / "report"
