@@ -106,11 +106,6 @@ def main() -> None:
     print_analytical_table()
     generate_all_plots(main_results, unstable_results, buffer_results, hetero_results)
 
-    from report.generate_report import generate_report
-
-    pdf_path = generate_report()
-    print(f"Relatório PDF: {pdf_path}")
-
 
 if __name__ == "__main__":
     main()
